@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-get [TARGET_PATH]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-get prod/rds"
+}
+
+function get {
+    echo "Run terraform get ${TARGET}..."
+    terraform get "${TARGET}"
+}
+
+
+
+if [[ -z "${TARGET}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+get

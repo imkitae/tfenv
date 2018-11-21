@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TF_HOME=.terraform
+TF_DEFAULT_VERSION=0.11.10
+# checksum reference: https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_SHA256SUMS
+TF_DEFAULT_SHA256SUM=43543a0e56e31b0952ea3623521917e060f2718ab06fe2b2d506cfaa14d54527
+
+TARGET_OS=${TARGET_OS:-linux}
+TARGET_ARCH=${TARGET_ARCH:-amd64}
+
+TF_PATH=${TF_HOME}/bin/${TARGET_OS}_${TARGET_ARCH}
+PATH=${PATH}:${TF_PATH}
+
+TF_PLUGIN_DIR=${TF_HOME}/plugins/${TARGET_OS}_${TARGET_ARCH}
+
+function install_bundle
+{
+    local package_config=terraform-bundle.hcl
+    local package_name="terraform_*_${TARGET_OS}_${TARGET_ARCH}.zip"
+    local package_lock="${TF_PLUGIN_DIR}/terraform-bundle.lock"
+
+    if [[ ! -e "${package_config}" ]]
+    then
+        echo "${package_config} doesn't exists. Skip installing package."
+        return 0
+    fi
+
+    if [[ -e "${package_lock}" ]] && echo "$(cat "${package_lock}")  ${package_config}" | sha256sum -cs
+    then
+        echo "${package_config} is not changed. Skip installing package."
+        return 0
+    fi
+
+    terraform-bundle package \
+        -os="${TARGET_OS}" \
+        -arch="${TARGET_ARCH}" \
+        -plugin-dir="${TF_PLUGIN_DIR}" \
+        "${package_config}"
+
+    echo "Unzip the bundle to ${TF_PATH}..."
+    unzip -o ${package_name} -d "${TF_PATH}/"
+
+    echo "Move plugins to ${TF_PLUGIN_DIR}..."
+    mv ${TF_PATH}/terraform-provider-* "${TF_PLUGIN_DIR}/"
+
+    echo "Install the bundle finished."
+    rm -f ${package_name}
+
+    sha256sum "${package_config}" | awk '{print $1}' > "${package_lock}"
+}
+
+function install_terraform
+{
+    if [[ -e "${TF_PATH}/terraform" ]]
+    then
+        return 0
+    fi
+
+    echo "Install terraform ${TF_DEFAULT_VERSION}"
+
+    local terraform_zip_name="terraform_${TF_DEFAULT_VERSION}_${TARGET_OS}_${TARGET_ARCH}.zip"
+    local terraform_url="https://releases.hashicorp.com/terraform/${TF_DEFAULT_VERSION}/${terraform_zip_name}"
+
+    echo "Downloading terraform... (${terraform_url})"
+    wget -q "${terraform_url}"
+    if ! echo "${TF_DEFAULT_SHA256SUM}  ${terraform_zip_name}" | sha256sum -cs
+    then
+        >&2 echo "Installation of terraform ${TF_DEFAULT_VERSION} failed: Checksum does not match"
+        >&2 echo "- expected: ${TF_DEFAULT_SHA256SUM}"
+        >&2 echo "- actual: $(sha256sum "${terraform_zip_name}" | awk '{print $1}')"
+        return 1
+    fi
+
+    echo "Unzip to ${TF_PATH}..."
+    unzip -o "${terraform_zip_name}" -d "${TF_PATH}/"
+
+    echo "Install Terraform finished."
+    rm -f "${terraform_zip_name}"
+}
+
+
+if [[ "${#}" < 2 ]]
+then
+    echo
+    echo "Usage: tfenv <COMMAND> <TARGET>"
+    echo
+    echo "Commands:"
+    echo "  init            Initialize a new or existing working directory."
+    echo "  get             Downloads and installs modules needed."
+    echo "  plan            Generates an execution plan."
+    echo "  apply           Builds or changes infrastructure."
+    echo "  output          Reads an output variable from a state and print."
+    echo "  destroy         Destroy managed infrastructure."
+    echo "  import          Import existing infrastructure into your state."
+    echo "  state           This command has subcommands for state management."
+    echo "  force-unlock    Manually unlock the state."
+    echo
+    exit 1
+
+elif [[ "${1}" == "init" ]] \
+|| [[ "${1}" == "plan" ]] \
+|| [[ "${1}" == "apply" ]] \
+|| [[ "${1}" == "get" ]] \
+|| [[ "${1}" == "destroy" ]] \
+|| [[ "${1}" == "output" ]] \
+|| [[ "${1}" == "state" ]] \
+|| [[ "${1}" == "import" ]] \
+|| [[ "${1}" == "force-unlock" ]]
+then
+    COMMAND=${1}
+    TARGET_PATH=${2}
+    shift 2
+
+    TF_PLAN_DIR=${TF_HOME}/plans/${TARGET_PATH}
+    TF_DATA_DIR=${TF_HOME}/data/${TARGET_PATH}
+    TF_LOG_DIR=${TF_HOME}/log
+
+    export TF_PLUGIN_DIR
+    export TF_PLAN_DIR
+    export TF_DATA_DIR
+    export TF_LOG_PATH=${TF_LOG_DIR}/${TARGET_PATH/\//_}.log
+    export TF_INPUT=${TF_INPUT:-1}
+    export TF_IN_AUTOMATION=${TF_IN_AUTOMATION:-1}
+
+    echo "plugin_cache_dir   = \"${PWD}/${TF_PLUGIN_DIR}\"" > "${HOME}/.terraformrc"
+    echo "disable_checkpoint = true" >> "${HOME}/.terraformrc"
+
+    mkdir -p "${TF_PATH}" "${TF_PLUGIN_DIR}" "${TF_LOG_DIR}"
+
+    install_bundle
+    install_terraform
+
+    exec "tfenv-${COMMAND}" "${TARGET_PATH}" "${@}"
+
+elif [[ "${1}" == "create_backend" ]] \
+|| [[ "${1}" == "delete_backend" ]]
+then
+    exec "${1}"
+
+else
+    exec "${@}"
+fi

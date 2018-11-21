@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+BACKEND_S3_REGION="${BACKEND_S3_REGION}"
+BACKEND_S3_BUCKET="${BACKEND_S3_BUCKET}"
+BACKEND_S3_DYNAMODB_TABLE="${BACKEND_S3_BUCKET}-lock"
+
+function delete_remote_state
+{
+    if aws s3 ls "s3://${BACKEND_S3_BUCKET}" > /dev/null 2>&1
+    then
+        if confirm "${BACKEND_S3_BUCKET}"
+        then
+            aws s3 rb "s3://${BACKEND_S3_BUCKET}" --force
+            echo "S3 Bucket '${BACKEND_S3_BUCKET}' deleted."
+        else
+            exit 1
+        fi
+    else
+        >&2 echo "S3 Bucket '${BACKEND_S3_BUCKET}' doesn't exists. Skipped deleting."
+    fi
+}
+
+function delete_remote_state_lock
+{
+    if aws dynamodb describe-table --table "${BACKEND_S3_DYNAMODB_TABLE}" > /dev/null 2>&1
+    then
+        if confirm "${BACKEND_S3_DYNAMODB_TABLE}"
+        then
+            aws dynamodb delete-table \
+                --table-name "${BACKEND_S3_DYNAMODB_TABLE}"
+            echo "DynamoDB '${BACKEND_S3_DYNAMODB_TABLE}' is deleted."
+        else
+            exit 1
+        fi
+    else
+        >&2 echo "DynamoDB '${BACKEND_S3_DYNAMODB_TABLE}' doesn't exists. Skipped deleting."
+    fi
+}
+
+function confirm
+{
+    local resource_name="${1}"
+
+    echo
+    echo -e "\033[31mDelete '${resource_name}'\033[0m"
+    echo
+    echo -e "\033[33mThis action cannot be undone. This will permanently delete '${resource_name}'.\033[0m"
+    echo -e "\033[33mPlease type in the name of the resource to confirm.\033[0m"
+
+    read -p ">> " answer
+    case ${answer} in
+        ${resource_name} ) return 0;;
+        * ) echo "Canceled."; return 1;;
+    esac
+}
+
+delete_remote_state_lock
+delete_remote_state
+

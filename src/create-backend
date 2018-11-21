@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+BACKEND_S3_REGION="${BACKEND_S3_REGION}"
+BACKEND_S3_BUCKET="${BACKEND_S3_BUCKET}"
+BACKEND_S3_DYNAMODB_TABLE="${BACKEND_S3_BUCKET}-lock"
+
+function create_remote_state
+{
+    if ! aws s3 ls "s3://${BACKEND_S3_BUCKET}" > /dev/null 2>&1
+    then
+        echo
+        aws s3api create-bucket \
+            --bucket "${BACKEND_S3_BUCKET}" \
+            --create-bucket-configuration "LocationConstraint=${BACKEND_S3_REGION}"
+        echo "S3 Bucket '${BACKEND_S3_BUCKET}' created."
+    else
+        >&2 echo "S3 Bucket '${BACKEND_S3_BUCKET}' already exists. Skipped creating."
+    fi
+}
+
+function create_remote_state_lock
+{
+    if ! aws dynamodb describe-table --table "${BACKEND_S3_DYNAMODB_TABLE}" > /dev/null 2>&1
+    then
+        echo
+        aws dynamodb create-table \
+            --table-name "${BACKEND_S3_DYNAMODB_TABLE}" \
+            --attribute-definitions "AttributeName=LockID,AttributeType=S" \
+            --key-schema "AttributeName=LockID,KeyType=HASH" \
+            --provisioned-throughput "ReadCapacityUnits=1,WriteCapacityUnits=1"
+        echo "DynamoDB '${BACKEND_S3_DYNAMODB_TABLE}' is created."
+    else
+        >&2 echo "DynamoDB '${BACKEND_S3_DYNAMODB_TABLE}' already exists. Skipped creating."
+    fi
+}
+
+create_remote_state
+create_remote_state_lock
+

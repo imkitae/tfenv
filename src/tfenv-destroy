@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+RESOURCE="${2:-}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-destroy [TARGET_PATH] [TARGET_RESOURCE]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-destroy prod/rds module.something"
+}
+
+function destroy {
+    if [[ -z "${RESOURCE}" ]]
+    then
+        echo "Run terraform destroy ${TARGET} all..."
+        terraform destroy ${TARGET}
+    else
+        echo "Run terraform destroy terraform/${TARGET} ${RESOURCE}..."
+        terraform destroy --target=${RESOURCE} ${TARGET}
+    fi
+}
+
+
+
+if [[ -z "${TARGET}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+destroy

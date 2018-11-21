@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+BACKEND_S3_REGION="${BACKEND_S3_REGION:-}"
+BACKEND_S3_BUCKET="${BACKEND_S3_BUCKET:-}"
+BACKEND_S3_DYNAMODB_TABLE="${BACKEND_S3_BUCKET}-lock"
+TF_PLUGIN_DIR="${TF_PLUGIN_DIR:-}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-init [TARGET_PATH]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-init prod/network"
+}
+
+function init {
+    echo "Run terraform init ${TARGET}..."
+
+    terraform init \
+        -plugin-dir="${TF_PLUGIN_DIR}" \
+        -backend=true \
+        -backend-config="region=${BACKEND_S3_REGION}" \
+        -backend-config="bucket=${BACKEND_S3_BUCKET}" \
+        -backend-config="dynamodb_table=${BACKEND_S3_DYNAMODB_TABLE}" \
+        -backend-config="key=${TARGET}" \
+        "${TARGET}"
+}
+
+
+
+if [[ -z "${TARGET}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+init

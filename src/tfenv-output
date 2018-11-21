@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-output [TARGET_PATH]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-output prod/rds"
+}
+
+function output {
+    echo "Run terraform ouput ${TARGET} all..."
+    terraform output -json
+}
+
+
+
+if [[ -z "${TARGET}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+# As a workaround of this,
+# https://github.com/hashicorp/terraform/issues/15761#issuecomment-321094947
+echo "terraform {" > /app/delete-this.tf
+echo "  backend \"s3\" {}" >> /app/delete-this.tf
+echo "}" >> /app/delete-this.tf
+
+output
+
+rm /app/delete-this.tf

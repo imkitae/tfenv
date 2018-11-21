@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+LOCK_ID="${2}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-force-unlock [LOCK_ID]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-force-unlock 9525701e-d002-c6bd-3f19-5954074bc7e2"
+}
+
+function force_unlock {
+    echo "Run terraform force-unlock ${LOCK_ID}..."
+    terraform force-unlock "${LOCK_ID}" "${TARGET}"
+}
+
+
+
+if [[ -z "${TARGET}" ]] \
+|| [[ -z "${LOCK_ID}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+force_unlock

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+TARGET="${1}"
+COMMAND="${2}"
+shift 2
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-state [TARGET_PATH] [COMMAND]"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-state prod/rds list"
+}
+
+function state {
+    echo "Run terraform state ${COMMAND} ${@} for ${TARGET}..."
+    exec terraform state "${COMMAND}" "${@}"
+}
+
+
+
+if [[ -z "${TARGET}" ]] || [[ -z "${COMMAND}" ]]
+then
+    print_usage
+    exit 1
+fi
+
+# As a workaround of this,
+# https://github.com/hashicorp/terraform/issues/15761#issuecomment-321094947
+echo "terraform {" > /app/delete-this.tf
+echo "  backend \"s3\" {}" >> /app/delete-this.tf
+echo "}" >> /app/delete-this.tf
+
+state "${@}"
+
+rm /app/delete-this.tf

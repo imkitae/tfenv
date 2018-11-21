@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+DETAILED_EXITCODE=0
+TF_PLAN_NAME=${TF_PLAN_NAME:-local}
+TARGET_PATH="${1}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-plan [OPTIONS] [TARGET_PATH]"
+    echo
+    echo "Options:"
+    echo
+    echo -e "  --detailed-exitcode\\tReturn detailed exit codes when the command exits. This"
+    echo -e "  \\t\\t\\twill change the meaning of exit codes to:"
+    echo -e "  \\t\\t\\t0 - Succeeded, diff is empty (no changes)"
+    echo -e "  \\t\\t\\t1 - Errored"
+    echo -e "  \\t\\t\\t2 - Succeeded, there is a diff"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-plan prod/rds"
+    echo "  tfenv-plan --detailed-exit-code prod/service/select"
+}
+
+function plan {
+    local plan_dir=".terraform/plans/${TARGET_PATH}"
+    local plan_path="${plan_dir}/${TF_PLAN_NAME}.tfplan"
+    local plan_result=0
+
+    echo "Run terraform plan ${TARGET_PATH}... (Save a plan to ${plan_path})"
+    mkdir -p "${plan_dir}"
+
+    terraform plan -detailed-exitcode "-out=${plan_path}" "${TARGET_PATH}"
+    plan_result=${?}
+
+    if [[ ${plan_result} -eq 0 ]]
+    then
+        echo "No changes. Remove the plan file. (${plan_path})"
+        rm "${plan_path}"
+    elif [[ ${plan_result} -eq 1 ]]
+    then
+        >&2 echo "Error in ${TARGET_PATH}. Stop terraform-plan."
+        exit 1
+    fi
+
+    if [[ ${DETAILED_EXITCODE} -ne 0 ]]
+    then
+        exit ${plan_result}
+    fi
+}
+
+
+
+if [[ ${#} -lt 1 ]] || [[ ${#} -gt 2 ]]
+then
+    print_usage
+    exit 1
+fi
+
+# Assign param from the next of 'TARGET' var
+shift 1
+
+while [[ ${#} -gt 0 ]]
+do
+    PARAM="${1}"
+    case "${PARAM}" in
+        --detailed-exitcode)
+            DETAILED_EXITCODE=1
+            shift
+            ;;
+        -*)
+            echo "Unrecognized argument: ${PARAM}"
+            print_usage
+            exit 1
+            ;;
+    esac
+done
+
+plan

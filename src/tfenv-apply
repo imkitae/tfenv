@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Variables
+IGNORE_PLAN=0
+TF_PLAN_NAME=${TF_PLAN_NAME:-local}
+TARGET="${1}"
+
+function print_usage {
+    echo
+    echo "Usage: tfenv-apply [TARGET_PATH] [OPTIONS]"
+    echo
+    echo "Options:"
+    echo
+    echo -e "  --ignore-plan\\tApply without plan file"
+    echo
+    echo "Example:"
+    echo
+    echo "  tfenv-apply prod/network"
+    echo "  tfenv-apply prod/rds --ignore-plan"
+}
+
+function apply {
+    local plan_path=".terraform/plans/${TARGET}/${TF_PLAN_NAME}.tfplan"
+
+    if [[ -f "${plan_path}" ]]
+    then
+        echo "Run terraform apply ${plan_path}..."
+        terraform apply ${plan_path}
+
+        echo "Remove the plan file. (${plan_path})"
+        rm ${plan_path}
+
+    elif [[ ${IGNORE_PLAN} -eq 1 ]]
+    then
+        echo "Run terraform apply ${TARGET}... (Ignored plan file)"
+        terraform apply ${TARGET}
+
+    else
+        >&2 echo "Failed to load the plan file. (${plan_path})"
+        >&2 echo "HINT: Run 'terraform-plan ${TARGET}' first."
+    fi
+}
+
+
+
+if [[ ${#} -lt 1 ]] || [[ ${#} -gt 2 ]]
+then
+    print_usage
+    exit 1
+fi
+
+# Assign param from the next of 'TARGET' var
+shift 1
+
+while [[ ${#} -gt 0 ]]
+do
+    PARAM="${1}"
+    case "${PARAM}" in
+        --ignore-plan)
+            IGNORE_PLAN=1
+            shift
+            ;;
+        *)
+            >&2 echo "Unrecognized argument: ${PARAM}"
+            print_usage
+            exit 1
+            ;;
+    esac
+done
+
+apply
