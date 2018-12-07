@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Variables
-TARGET="${1}"
+TARGET_PATH="${1:-}"
 
 function print_usage {
     echo
@@ -15,13 +15,13 @@ function print_usage {
 }
 
 function output {
-    echo "Run terraform ouput ${TARGET} all..."
+    echo "Run terraform ouput ${TARGET_PATH} all..."
     terraform output -json
 }
 
 
 
-if [[ -z "${TARGET}" ]]
+if [[ -z "${TARGET_PATH}" ]]
 then
     print_usage
     exit 1

@@ -5,7 +5,9 @@ IFS=$'\n\t'
 # Variables
 IGNORE_PLAN=0
 TF_PLAN_NAME=${TF_PLAN_NAME:-local}
-TARGET="${1}"
+
+# Params
+TARGET_PATH="${1:-}"
 
 function print_usage {
     echo
@@ -22,7 +24,7 @@ function print_usage {
 }
 
 function apply {
-    local plan_path=".terraform/plans/${TARGET}/${TF_PLAN_NAME}.tfplan"
+    local plan_path=".terraform/plans/${TARGET_PATH}/${TF_PLAN_NAME}.tfplan"
 
     if [[ -f "${plan_path}" ]]
     then
@@ -34,18 +36,19 @@ function apply {
 
     elif [[ ${IGNORE_PLAN} -eq 1 ]]
     then
-        echo "Run terraform apply ${TARGET}... (Ignored plan file)"
-        terraform apply ${TARGET}
+        echo "Run terraform apply ${TARGET_PATH}... (Ignored plan file)"
+        terraform apply ${TARGET_PATH}
 
     else
         >&2 echo "Failed to load the plan file. (${plan_path})"
-        >&2 echo "HINT: Run 'terraform-plan ${TARGET}' first."
+        >&2 echo "HINT: Run 'terraform-plan ${TARGET_PATH}' first."
     fi
 }
 
 
 
-if [[ ${#} -lt 1 ]] || [[ ${#} -gt 2 ]]
+if [[ ${#} -lt 1 ]] \
+|| [[ ${#} -gt 2 ]]
 then
     print_usage
     exit 1

@@ -2,9 +2,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Variables
-TARGET="${1}"
-COMMAND="${2}"
+# Params
+TARGET_PATH="${1:-}"
+COMMAND="${2:-}"
 shift 2
 
 function print_usage {
@@ -17,13 +17,14 @@ function print_usage {
 }
 
 function state {
-    echo "Run terraform state ${COMMAND} ${@} for ${TARGET}..."
+    echo "Run terraform state ${COMMAND} ${@} for ${TARGET_PATH}..."
     exec terraform state "${COMMAND}" "${@}"
 }
 
 
 
-if [[ -z "${TARGET}" ]] || [[ -z "${COMMAND}" ]]
+if [[ -z "${TARGET_PATH}" ]] \
+|| [[ -z "${COMMAND}" ]]
 then
     print_usage
     exit 1

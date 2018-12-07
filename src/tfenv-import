@@ -2,10 +2,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Variables
-TARGET="${1}"
-RESOURCE_ADDR="${2}"
-ID="${3}"
+# Params
+TARGET_PATH="${1:-}"
+RESOURCE_ADDR="${2:-}"
+ID="${3:-}"
 
 function print_usage {
     echo
@@ -17,13 +17,15 @@ function print_usage {
 }
 
 function import {
-    echo "Run terraform import ${RESOURCE_ADDR} ${ID} for ${TARGET}..."
-    exec terraform import --config=${TARGET} "${RESOURCE_ADDR}" "${ID}"
+    echo "Run terraform import ${RESOURCE_ADDR} ${ID} for ${TARGET_PATH}..."
+    exec terraform import --config=${TARGET_PATH} "${RESOURCE_ADDR}" "${ID}"
 }
 
 
 
-if [[ -z "${TARGET}" ]] || [[ -z "${RESOURCE_ADDR}" ]]
+if [[ -z "${TARGET_PATH}" ]] \
+|| [[ -z "${RESOURCE_ADDR}" ]] \
+|| [[ -z "${ID}" ]]
 then
     print_usage
     exit 1

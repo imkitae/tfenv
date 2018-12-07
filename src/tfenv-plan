@@ -5,7 +5,9 @@ IFS=$'\n\t'
 # Variables
 DETAILED_EXITCODE=0
 TF_PLAN_NAME=${TF_PLAN_NAME:-local}
-TARGET_PATH="${1}"
+
+# Params
+TARGET_PATH="${1:-}"
 
 function print_usage {
     echo
@@ -54,7 +56,8 @@ function plan {
 
 
 
-if [[ ${#} -lt 1 ]] || [[ ${#} -gt 2 ]]
+if [[ ${#} -lt 1 ]] \
+|| [[ ${#} -gt 2 ]]
 then
     print_usage
     exit 1

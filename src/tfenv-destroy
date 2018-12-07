@@ -2,13 +2,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Variables
-TARGET="${1}"
+# Params
+TARGET_PATH="${1:-}"
 RESOURCE="${2:-}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv destroy [TARGET_PATH] [TARGET_RESOURCE]"
+    echo "Usage: tfenv destroy [TARGET_PATH] [RESOURCE]"
     echo
     echo "Example:"
     echo
@@ -18,17 +18,18 @@ function print_usage {
 function destroy {
     if [[ -z "${RESOURCE}" ]]
     then
-        echo "Run terraform destroy ${TARGET} all..."
-        terraform destroy ${TARGET}
+        echo "Run terraform destroy ${TARGET_PATH} all..."
+        terraform destroy ${TARGET_PATH}
     else
-        echo "Run terraform destroy terraform/${TARGET} ${RESOURCE}..."
-        terraform destroy --target=${RESOURCE} ${TARGET}
+        echo "Run terraform destroy terraform/${TARGET_PATH} ${RESOURCE}..."
+        terraform destroy --target=${RESOURCE} ${TARGET_PATH}
     fi
 }
 
 
 
-if [[ -z "${TARGET}" ]]
+if [[ -z "${TARGET_PATH}" ]] \
+|| [[ -z "${RESOURCE}" ]]
 then
     print_usage
     exit 1

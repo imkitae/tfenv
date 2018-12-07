@@ -3,11 +3,13 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # Variables
-TARGET="${1}"
 BACKEND_S3_REGION="${BACKEND_S3_REGION:-}"
 BACKEND_S3_BUCKET="${BACKEND_S3_BUCKET:-}"
 BACKEND_S3_DYNAMODB_TABLE="${BACKEND_S3_BUCKET}-lock"
 TF_PLUGIN_DIR="${TF_PLUGIN_DIR:-}"
+
+# Params
+TARGET_PATH="${1:-}"
 
 function print_usage {
     echo
@@ -19,7 +21,7 @@ function print_usage {
 }
 
 function init {
-    echo "Run terraform init ${TARGET}..."
+    echo "Run terraform init ${TARGET_PATH}..."
 
     terraform init \
         -plugin-dir="${TF_PLUGIN_DIR}" \
@@ -27,15 +29,23 @@ function init {
         -backend-config="region=${BACKEND_S3_REGION}" \
         -backend-config="bucket=${BACKEND_S3_BUCKET}" \
         -backend-config="dynamodb_table=${BACKEND_S3_DYNAMODB_TABLE}" \
-        -backend-config="key=${TARGET}" \
-        "${TARGET}"
+        -backend-config="key=${TARGET_PATH}" \
+        "${TARGET_PATH}"
 }
 
 
 
-if [[ -z "${TARGET}" ]]
+if [[ -z "${TARGET_PATH}" ]]
 then
     print_usage
+    exit 1
+fi
+
+if [[ -z "${BACKEND_S3_REGION}" ]] \
+|| [[ -z "${BACKEND_S3_BUCKET}" ]] \
+|| [[ -z "${TF_PLUGIN_DIR}" ]]
+then
+    "Environment variables 'BACKEND_S3_REGION', 'BACKEND_S3_BUCKET', 'TF_PLUGIN_DIR' are required"
     exit 1
 fi
 

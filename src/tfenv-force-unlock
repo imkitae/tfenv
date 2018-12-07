@@ -2,9 +2,9 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-# Variables
-TARGET="${1}"
-LOCK_ID="${2}"
+# Params
+TARGET_PATH="${1:-}"
+LOCK_ID="${2:-}"
 
 function print_usage {
     echo
@@ -17,12 +17,12 @@ function print_usage {
 
 function force_unlock {
     echo "Run terraform force-unlock ${LOCK_ID}..."
-    terraform force-unlock "${LOCK_ID}" "${TARGET}"
+    terraform force-unlock "${LOCK_ID}" "${TARGET_PATH}"
 }
 
 
 
-if [[ -z "${TARGET}" ]] \
+if [[ -z "${TARGET_PATH}" ]] \
 || [[ -z "${LOCK_ID}" ]]
 then
     print_usage
