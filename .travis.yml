@@ -18,12 +18,17 @@ before_install:
 
 script:
   - bin/build.sh latest
-  - bin/test.sh
+  #- bin/test.sh
 
 deploy:
-  # Push Docker image
   - provider: script
     skip_cleanup: true
     script: bin/push.sh ridibooks/tfenv ${TRAVIS_TAG}
     on:
       tags: true
+
+  - provider: script
+    skip_cleanup: true
+    script: bin/push.sh ridibooks/tfenv latest
+    on:
+      branch: master
