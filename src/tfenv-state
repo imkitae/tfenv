@@ -9,11 +9,11 @@ shift 2
 
 function print_usage {
     echo
-    echo "Usage: tfenv-state [TARGET_PATH] [COMMAND]"
+    echo "Usage: tfenv state [TARGET_PATH] [COMMAND]"
     echo
     echo "Example:"
     echo
-    echo "  tfenv-state prod/rds list"
+    echo "  tfenv state prod/rds list"
 }
 
 function state {

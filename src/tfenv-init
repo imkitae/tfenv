@@ -11,11 +11,11 @@ TF_PLUGIN_DIR="${TF_PLUGIN_DIR:-}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv-init [TARGET_PATH]"
+    echo "Usage: tfenv init [TARGET_PATH]"
     echo
     echo "Example:"
     echo
-    echo "  tfenv-init prod/network"
+    echo "  tfenv init prod/network"
 }
 
 function init {

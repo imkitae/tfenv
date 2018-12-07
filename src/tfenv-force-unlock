@@ -8,11 +8,11 @@ LOCK_ID="${2}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv-force-unlock [LOCK_ID]"
+    echo "Usage: tfenv force-unlock [LOCK_ID]"
     echo
     echo "Example:"
     echo
-    echo "  tfenv-force-unlock 9525701e-d002-c6bd-3f19-5954074bc7e2"
+    echo "  tfenv force-unlock 9525701e-d002-c6bd-3f19-5954074bc7e2"
 }
 
 function force_unlock {

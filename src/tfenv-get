@@ -7,11 +7,11 @@ TARGET="${1}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv-get [TARGET_PATH]"
+    echo "Usage: tfenv get [TARGET_PATH]"
     echo
     echo "Example:"
     echo
-    echo "  tfenv-get prod/rds"
+    echo "  tfenv get prod/rds"
 }
 
 function get {

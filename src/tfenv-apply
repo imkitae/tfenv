@@ -9,7 +9,7 @@ TARGET="${1}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv-apply [TARGET_PATH] [OPTIONS]"
+    echo "Usage: tfenv apply [TARGET_PATH] [OPTIONS]"
     echo
     echo "Options:"
     echo
@@ -17,8 +17,8 @@ function print_usage {
     echo
     echo "Example:"
     echo
-    echo "  tfenv-apply prod/network"
-    echo "  tfenv-apply prod/rds --ignore-plan"
+    echo "  tfenv apply prod/network"
+    echo "  tfenv apply prod/rds --ignore-plan"
 }
 
 function apply {

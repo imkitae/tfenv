@@ -82,7 +82,20 @@ function install_terraform
 }
 
 
-if [[ "${#}" < 2 ]]
+# Unset all TF_VAR_* environment variables with empty string.
+# This is for avoiding default empty string that docker-compose set on.
+EMPTY_TF_VARS="$(env | sed -n 's/^\(TF_VAR_.*\)=$/\1/p')"
+if [[ ! -z "${EMPTY_TF_VARS}" ]]
+then
+    unset ${EMPTY_TF_VARS}
+fi
+
+if [[ "${#}" == 1 ]] \
+&& [[ "${1}" == "create-backend" || "${1}" == "delete-backend" ]]
+then
+    exec "${1}"
+
+elif [[ "${#}" < 2 ]]
 then
     echo
     echo "Usage: tfenv <COMMAND> <TARGET>"
@@ -134,11 +147,6 @@ then
     install_terraform
 
     exec "tfenv-${COMMAND}" "${TARGET_PATH}" "${@}"
-
-elif [[ "${1}" == "create_backend" ]] \
-|| [[ "${1}" == "delete_backend" ]]
-then
-    exec "${1}"
 
 else
     exec "${@}"

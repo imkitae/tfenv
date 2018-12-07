@@ -9,11 +9,11 @@ ID="${3}"
 
 function print_usage {
     echo
-    echo "Usage: tfenv-import [TARGET_PATH] [RESOURCE_ADDR] [ID]"
+    echo "Usage: tfenv import [TARGET_PATH] [RESOURCE_ADDR] [ID]"
     echo
     echo "Example:"
     echo
-    echo "  tfenv-import prod/rds aws_iam_account_alias.alias select-prod"
+    echo "  tfenv import prod/rds aws_iam_account_alias.alias select-prod"
 }
 
 function import {
